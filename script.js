@@ -1,12 +1,5 @@
 
 "use strict";
-// Port from Shadertoy to THREE.js: https://www.shadertoy.com/view/4sG3WV
-// var VERTEX_SHADER = "\n    varying vec2 vUv;\n    \n    void main() {\n        vUv = uv;\n        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\n    }\n";
-// var BUFFER_A_FRAG = "\n    uniform vec4 iMouse;\n    uniform sampler2D iChannel0;\n    uniform sampler2D iChannel1;\n    uniform vec2 iResolution;\n    uniform float iFrame;\n    varying vec2 vUv;\n    \n\n  vec4 circle(vec2 uv, vec2 pos, float rad, vec3 color) {\n    float d = length(pos - uv) - rad;\n    float t = clamp(d, 0.0, 1.0);\n    return vec4(color, 1.0 - t);\n  }\nvoid getVal(vec2 p, out vec2 val, out vec2 laplacian) {\n  vec2 r = iResolution.xy;\n  vec2 uv = p / r;\n  vec2 n = p + vec2(0.0, 1.0);\n  vec2 ne = p + vec2(1.0, 1.0);\n  vec2 nw = p + vec2(-1.0, 1.0);\n  vec2 e = p + vec2(1.0, 0.0);\n  vec2 s = p + vec2(0.0, -1.0);\n  vec2 se = p + vec2(1.0, -1.0);\n  vec2 sw = p + vec2(-1.0, -1.0);\n  vec2 w = p + vec2(-1.0, 0.0);\n\n  val = texture2D(iChannel0, uv).xy;\n    \n  //3x3 convolution with center weight -1, adjacent neighbors .2, and diagonals .05\n  laplacian = texture2D(iChannel0, n / r).xy * 0.2;\n  laplacian += texture2D(iChannel0, e / r).xy * 0.2;\n  laplacian += texture2D(iChannel0, s / r).xy * 0.2;\n  laplacian += texture2D(iChannel0, w / r).xy * 0.2;\n  laplacian += texture2D(iChannel0, nw / r).xy * 0.05;\n  laplacian += texture2D(iChannel0, ne / r).xy * 0.05;\n  laplacian += texture2D(iChannel0, sw / r).xy * 0.05;\n  laplacian += texture2D(iChannel0, se / r).xy * 0.05;\n  laplacian += -1.0 * val;   \n}\n    float lineDist(vec2 p, vec2 start, vec2 end, float width) {\n        vec2 dir = start - end;\n        float lngth = length(dir);\n        dir /= lngth;\n        vec2 proj = max(0.0, min(lngth, dot((start - p), dir))) * dir;\n        return length( (start - p) - proj ) - (width / 2.0);\n    }\n    \n    void main() {\n        vec2 uv = vUv;\n\n\n    vec3 color = vec3(0.0);\n\n\n\tfloat Da, Db;\n  vec2 mo = iMouse.xy / iResolution.xy;\n    if (iFrame > 2.) {\n     \n      \n\nif (length(uv-mo) < .04){\n \t\tvec4 m = mix(vec4(0,1,0,1), vec4(1,0,0,1), length(uv-mo)); \n         color = m.xyz;\n     }\nelse{\n   vec2 laplacian;\n    \tvec3 val = texture2D(iChannel0, uv).xyz;\n        \n        float AB2 =  val.x * val.y * val.y;\n    \tgetVal(gl_FragCoord.xy, val.xy, laplacian);\n\nfloat f, k;\n        vec2 center = iResolution.xy * .5;\n\t\tfloat radius = 0.5 * iResolution.y;\n\n    \tif ( length(center-gl_FragCoord.xy) < 205.){\n            Da = 1.;\n            Db = .9;\n        \tf = .02;\n            k = .05;\n        }\n        else{\n            Da = 1.;\n            Db = .5;\n            f = .03;\n            k = .06;\n        }\n     \n/*k = ~.05-.09\nF = ~.012-.04*/\nfloat a = Da * laplacian.x - AB2 + f * (1.0 - val.x);\nfloat b = Db * laplacian.y + AB2 - (k + f) * val.y;\nvec2 rxn = vec2(a,b);\nfloat timestep= 1.0;\n  color = vec3(val.xy + rxn * .75, 1.);\n}\n gl_FragColor = vec4(color.xy,1.,1.0);\n\n\n     }\n}\n\n";
-// var BUFFER_B_FRAG = "\n    uniform vec4 iMouse;\n    uniform sampler2D iChannel0;\n    uniform vec3 iResolution;\n    varying vec2 vUv;\n    \n  \n    \n    \n    void main( ) {\n    \n        vec2 uv = vUv;// / iResolution.xy;\n      \n        gl_FragColor = vec4(texture2D(iChannel0,uv).rgb,1.0);\n    }\n";
-// var BUFFER_C_FRAG = "\n    uniform vec4 iMouse;\n    uniform sampler2D iChannel0;\n    uniform vec3 iResolution;\n    varying vec2 vUv;\n    \n  \n    \n    \n    void main( ) {\n    \n        vec2 uv = vUv;// / iResolution.xy;\n      \n        gl_FragColor = vec4(texture2D(iChannel0,uv).rgb,1.0);\n    }\n";
-// var BUFFER_FINAL_FRAG = "\nuniform vec4 iMouse;\n    uniform sampler2D iChannel0;\n    uniform sampler2D iChannel1;\nuniform vec3 iResolution;\n    varying vec2 vUv;\n    \n    void main() {\n        vec2 uv = vUv;\n     vec2 pixelSize = 1. / iResolution.xy;\n     vec2 aspect = vec2(1.,iResolution.y/iResolution.x);\n\n\n \tvec2 lightSize=vec2(4.);\n\n//     // get the gradients from the blurred image\n \tvec2 d = pixelSize*2.;\n \tvec4 dx = (texture2D(iChannel1, uv + vec2(1,0)*d) - texture2D(iChannel1, uv - vec2(1,0)*d))*0.5;\n\tvec4 dy = (texture2D(iChannel1, uv + vec2(0,1)*d) - texture2D(iChannel1, uv - vec2(0,1)*d))*0.5;\n\t// add the pixel gradients\n\td = pixelSize*1.;\n\tdx += texture2D(iChannel0, uv + vec2(1,0)*d) - texture2D(iChannel0, uv - vec2(1,0)*d);\n\tdy += texture2D(iChannel0, uv + vec2(0,1)*d) - texture2D(iChannel0, uv - vec2(0,1)*d);\n\n\tvec2 displacement = vec2(dx.x,dy.x)*lightSize; // using only the red gradient as displacement vector\n\tfloat light = pow(max(1.-distance(0.5+(uv-0.5)*aspect*lightSize + displacement,0.5+(iMouse.xy*pixelSize-0.5)*aspect*lightSize),0.),4.);\n\n\t// recolor the red channel\n\tvec4 rd = vec4(texture2D(iChannel0,uv+vec2(dx.x,dy.x)*pixelSize*8.).x)*vec4(0.7,1.5,2.0,1.0)- vec4(0.3,1.0,1.0,1.0);\n\n    // and add the light map\n  gl_FragColor = mix(rd,vec4(8.0,6.,2.,1.), light*0.75*vec4(texture2D(iChannel0,uv+vec2(dx.x,dy.x)*pixelSize*8.).x)); \n\t\n        vec2 a = texture2D(iChannel1,uv).xy;\n        gl_FragColor = vec4(texture2D(iChannel0,a).rgb,1.0);\n    }\n";
-
 
 var VERTEX_SHADER = `
     varying vec2 vUv;
@@ -19,15 +12,15 @@ var VERTEX_SHADER = `
 
 var BUFFER_A_FRAG = `
     uniform vec4 iMouse;
-uniform vec4 iMouse2;
-uniform vec4 iMouse3;
-uniform vec4 iMouse4;
-uniform vec4 iMouse5;
-uniform float fiMouse;
-uniform float fiMouse1;
-uniform float fiMouse2;
-uniform float fiMouse3;
-uniform float fiMouse4;
+    uniform vec4 iMouse2;
+    uniform vec4 iMouse3;
+    uniform vec4 iMouse4;
+    uniform vec4 iMouse5;
+    uniform float fiMouse;
+    uniform float fiMouse1;
+    uniform float fiMouse2;
+    uniform float fiMouse3;
+    uniform float fiMouse4;
     uniform sampler2D iChannel0;
     uniform sampler2D iChannel1;
 
@@ -228,10 +221,10 @@ uniform vec3 iResolution;
   gl_FragColor = mix(rd,vec4(8.0,6.,2.,1.), light*0.75*vec4(texture2D(iChannel0,uv+vec2(dx.x,dy.x)*pixelSize*8.).x));
 
         vec2 a = texture2D(iChannel1,uv).xy;
-     gl_FragColor = vec4(texture2D(iChannel1,uv).rgb,1.0);
+    // gl_FragColor = vec4(texture2D(iChannel1,uv).rgb,1.0);
    float r = texture2D(iChannel1, uv).r;
 //vec4 aa=texture2D(iChannel1,uv);
-    //  gl_FragColor = vec4(smoothstep(0.1,.2,vec4(r)));
+     //gl_FragColor = vec4(smoothstep(0.1,.2,vec4(r)));
     }
 `
       var gui = new dat.GUI();
