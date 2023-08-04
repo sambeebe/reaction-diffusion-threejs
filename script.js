@@ -35,7 +35,7 @@ uniform vec3 iResolution;
 `
 // var gui = new dat.GUI();
 var params = {
-    kvalval: .062,
+    kvalval: .0620,
     fvalval: .0545
 };
 // gui.add(params, 'kvalval')
